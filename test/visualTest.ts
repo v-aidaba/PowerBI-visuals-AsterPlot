@@ -316,6 +316,89 @@ describe("AsterPlot", () => {
                 expect(visualBuilder.dataLabels.length).toBe(0);
             });
 
+            it("should render labels inside when position is set to Inside", (done) => {
+                (<any>dataView.metadata.objects).labels = {
+                    position: "inside",
+                    show: true
+                };
+
+                visualBuilder.updateRenderTimeout(dataView, () => {
+                const labels = visualBuilder.dataLabels;
+                const isInside = Array.from(labels).every(label => {
+                        const x = parseFloat(label.getAttribute("x") || "0");
+                        const y = parseFloat(label.getAttribute("y") || "0");
+                        const distance = Math.sqrt(x * x + y * y);
+                        return distance < 150;
+                    });
+                    expect(isInside).toBeTrue();
+                    done();
+                });
+            });
+
+            it("should show category when showCategory is enabled", () => {
+                (<any>dataView.metadata.objects).labels.showCategory = true;
+                (<any>dataView.metadata.objects).labels.showDataValue = false;
+                (<any>dataView.metadata.objects).labels.showPercentOfTotal = false;
+
+                visualBuilder.updateFlushAllD3Transitions(dataView);
+
+                const label = visualBuilder.dataLabels[0];
+                const expectedCategory = defaultDataViewBuilder.valuesCategory[0];
+                expect(label.textContent).toBe(expectedCategory);
+            });
+
+            it("should show data value when showDataValue is enabled", () => {
+                (<any>dataView.metadata.objects).labels.showCategory = false;
+                (<any>dataView.metadata.objects).labels.showDataValue = true;
+                (<any>dataView.metadata.objects).labels.showPercentOfTotal = false;
+
+                visualBuilder.updateFlushAllD3Transitions(dataView);
+
+                const label = visualBuilder.dataLabels[0];
+                expect(label.textContent).toMatch(/\$.*\d/);
+            });
+
+      
+            it("should show percentage when showPercentOfTotal is enabled", () => {
+                (<any>dataView.metadata.objects).labels.showCategory = false;
+                (<any>dataView.metadata.objects).labels.showDataValue = false;
+                (<any>dataView.metadata.objects).labels.showPercentOfTotal = true;
+
+                visualBuilder.updateFlushAllD3Transitions(dataView);
+
+                const label = visualBuilder.dataLabels[0];
+                expect(label.textContent).toContain("%");
+            });
+
+            it("should show all components when all toggles are enabled", () => {
+                (<any>dataView.metadata.objects).labels.showCategory = true;
+                (<any>dataView.metadata.objects).labels.showDataValue = true;
+                (<any>dataView.metadata.objects).labels.showPercentOfTotal = true;
+
+                visualBuilder.updateFlushAllD3Transitions(dataView);
+
+                const label = visualBuilder.dataLabels[0];
+                const labelText = label.textContent!;
+                
+                expect(labelText).toContain(defaultDataViewBuilder.valuesCategory[0]);
+                expect(labelText).toMatch(/\$/);
+                expect(labelText).toContain("%");
+                
+                // Components should be space-separated
+                const parts = labelText.split(" ");
+                expect(parts.length).toBeGreaterThanOrEqual(3);
+            });
+
+            it("should show empty label when all toggles are disabled", () => {
+                (<any>dataView.metadata.objects).labels.showCategory = false;
+                (<any>dataView.metadata.objects).labels.showDataValue = false;
+                (<any>dataView.metadata.objects).labels.showPercentOfTotal = false;
+
+                visualBuilder.updateFlushAllD3Transitions(dataView);
+                expect(visualBuilder.dataLabels.length).toBe(0);
+            });
+
+
             it("color", () => {
                 const color: string = "#649731";
 
